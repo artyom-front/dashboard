@@ -52,6 +52,7 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
     {
       accessorKey: 'DATE_CREATE',
       header: 'Дата заявки',
+       meta: { width: 'w-[120px]' },
       cell: (info) => {
         const date = new Date(info.getValue<string>());
         const daysOnStage = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
@@ -70,6 +71,7 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
     {
       accessorKey: 'STAGE_ID',
       header: 'Статус',
+       meta: { width: 'w-[120px]' },
       cell: (info) => {
         const stageId = info.getValue<string>();
         const label = STAGE_MAP[stageId] || stageId;
@@ -85,11 +87,13 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
     {
       accessorKey: 'ASSIGNED_BY_ID',
       header: 'Исполнитель',
+       meta: { width: 'w-[120px]' },
       cell: (info) => `ID: ${info.getValue<string>()}`,
     },
     {
       accessorKey: 'DATE_MODIFY',
       header: 'Последнее касание',
+       meta: { width: 'w-[120px]' },
       cell: (info) => {
         const dateStr = info.getValue<string>();
         const date = new Date(dateStr);
@@ -116,11 +120,13 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
     {
       accessorKey: 'COMMENTS',
       header: 'Комментарий',
+       meta: { width: 'w-[120px]' },
       cell: (info) => info.getValue<string>() || '—',
     },
     {
       accessorKey: 'ID',
       header: 'Контакт разработчика',
+       meta: { width: 'w-[120px]' },
       cell: (info) => {
         const dealId = info.getValue<string>();
         return <span className="text-gray-400" title={`ID сделки: ${dealId}`}>—</span>;
@@ -157,11 +163,14 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
 
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
+         <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead 
+                    key={header.id} 
+                    className={(header.column.columnDef.meta as { width?: string })?.width}
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -180,8 +189,13 @@ export function DealTable({ data, total, page, perPage, hasNext, onPageChange, o
                     title="Нажмите для просмотра деталей"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <TableCell 
+                        key={cell.id} 
+                        className={(cell.column.columnDef.meta as { width?: string })?.width}
+                      >
+                        <div className="truncate">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
                       </TableCell>
                     ))}
                   </TableRow>

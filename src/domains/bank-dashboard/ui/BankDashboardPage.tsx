@@ -1,6 +1,6 @@
 // src/domains/bank-dashboard/ui/BankDashboardPage.tsx
 import { fetchDeals } from '@/domains/bank-dashboard/api/fetchDeals';
-import { DealTable } from './DealTables';
+import { DealTable } from './DealTable';
  
 
 export async function BankDashboardPage() {

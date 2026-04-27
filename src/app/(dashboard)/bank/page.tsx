@@ -7,7 +7,6 @@ import { ThemeToggle } from '@/domains/shared/ui/ThemeToggle';
 import { exportToCsv } from '@/domains/bank-dashboard/lib/exportToCsv';
 import { Button } from '@/components/ui/button';  // ← ДОБАВИЛИ
 import type { B24Deal } from '@/domains/bank-dashboard/model/types';
-import { error } from 'console';
 
 export default function BankPage() {
   const [data, setData] = useState<B24Deal[]>([]);
@@ -41,9 +40,8 @@ export default function BankPage() {
     if (currentFilters.dateTo) params.set('dateTo', currentFilters.dateTo);
 
     try {
-      const res = await fetch(`/api/v1/deals?${params.toString()}`, {
-        cache: 'no-store',
-      });
+      const res = await fetch(`/api/v1/deals?${params.toString()}`);
+      
       if (!res.ok) throw new Error('Failed to load');
 
       const result = await res.json();

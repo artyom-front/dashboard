@@ -32,7 +32,7 @@ export function DealFilters({ onFilterChange }: DealFiltersProps) {
   const [sortOrder, setSortOrder] = useState<'DESC' | 'ASC'>('DESC');
 
   // Debounce для поиска по тексту
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+ const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const applyFilters = useCallback((patch?: Partial<typeof filters>) => {
     const filters = {
@@ -104,7 +104,7 @@ export function DealFilters({ onFilterChange }: DealFiltersProps) {
 
       <div className="flex flex-wrap gap-2 items-center">
         <Select value={stageId} onValueChange={handleStageChange}>
-          <SelectTrigger className="w-[220px]">
+          <SelectTrigger className="w-55">
             <SelectValue placeholder="Все статусы" />
           </SelectTrigger>
           <SelectContent>
@@ -116,7 +116,7 @@ export function DealFilters({ onFilterChange }: DealFiltersProps) {
           </SelectContent>
         </Select>
 
-        <label className="w-[150px] cursor-pointer relative">
+        <label className="w-37.5 cursor-pointer relative">
           <Input
             type="date"
             value={dateFrom}
@@ -125,7 +125,7 @@ export function DealFilters({ onFilterChange }: DealFiltersProps) {
           />
         </label>
         <span className="text-gray-400">—</span>
-        <label className="w-[150px] cursor-pointer relative">
+        <label className="w-37.5 cursor-pointer relative">
           <Input
             type="date"
             value={dateTo}
@@ -135,7 +135,7 @@ export function DealFilters({ onFilterChange }: DealFiltersProps) {
         </label>
 
         <Select value={sortOrder} onValueChange={(v) => handleSortChange(v as 'DESC' | 'ASC')}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Сортировка" />
           </SelectTrigger>
           <SelectContent>

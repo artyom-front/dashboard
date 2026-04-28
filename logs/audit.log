@@ -1,0 +1,6 @@
+{"ts":"2026-04-28T09:31:30.356Z","action":"auth.sign_in","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"role":"admin","bankCount":1}}
+{"ts":"2026-04-28T09:39:20.050Z","action":"deal.export","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"bank":"spb","count":93,"filters":{"search":false,"stageId":false,"dateFrom":false,"dateTo":false}}}
+{"ts":"2026-04-28T09:40:39.807Z","action":"auth.sign_out","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"role":"admin","bankCount":1}}
+{"ts":"2026-04-28T09:41:11.558Z","action":"auth.sign_in","subjectHash":"42f7fcc3561a218e0dc1bbb1d1864e400d569c083f1abc628b3d386a0e36d328","meta":{"role":"viewer","bankCount":1}}
+{"ts":"2026-04-28T09:41:31.342Z","action":"auth.sign_out","subjectHash":"42f7fcc3561a218e0dc1bbb1d1864e400d569c083f1abc628b3d386a0e36d328","meta":{"role":"viewer","bankCount":1}}
+{"ts":"2026-04-28T09:41:34.424Z","action":"auth.denied","subjectHash":"621e9f2b8eaa79936f9a94d730a9ce5c756b2fa4394d359238feec38eec41d0e","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}

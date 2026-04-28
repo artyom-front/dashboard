@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -8,7 +7,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
 export const metadata: Metadata = {
   title: 'Первый ККМ — Дашборд',
-  description: 'Управление заявками на облачные кассы',
+  description: 'Управление заявками и доступами по банкам',
 };
 
 export default function RootLayout({

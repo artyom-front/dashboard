@@ -1,13 +1,19 @@
-// src/app/providers.tsx
 'use client';
 
+import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from 'next-themes';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { IdleLogout } from '@/domains/shared/ui/IdleLogout';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-    </ThemeProvider>
+    <SessionProvider refetchInterval={60 * 5} refetchOnWindowFocus>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <IdleLogout idleTimeoutMs={15 * 60 * 1000} />
+        {children}
+      </ThemeProvider>
+    </SessionProvider>
   );
 }
+
+export default Providers;

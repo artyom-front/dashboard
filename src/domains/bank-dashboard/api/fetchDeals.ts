@@ -1,30 +1,172 @@
-// src/domains/bank-dashboard/api/fetchDeals.ts
 import { callBitrix } from '@/domains/shared/api/b24Client';
-import type { B24Deal } from '@/domains/bank-dashboard/model/types';
+import type {
+  B24Deal,
+  DealDashboardSummary,
+  FetchDealsResult,
+  StageStat,
+} from '@/domains/bank-dashboard/model/types';
 import { CLOUD_KASSA_CATEGORY_ID } from '@/domains/bank-dashboard/model/constants';
 
 export interface FetchDealsParams {
+  bank?: string;
   page?: number;
   perPage?: number;
   stageId?: string;
-  bankFilter?: string;
   search?: string;
   dateFrom?: string;
   dateTo?: string;
-  sortBy?: string;
+  sortBy?: 'DATE_CREATE' | 'TITLE';
   sortOrder?: 'ASC' | 'DESC';
 }
 
-export interface FetchDealsResult {
-  deals: B24Deal[];
-  total: number;
-  page: number;
-  perPage: number;
-  hasNext: boolean;
+function extractDateKey(value: unknown): string | null {
+  if (typeof value !== 'string' || value.length < 10) return null;
+  return value.slice(0, 10);
+}
+
+function localTodayKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function classifyStageId(stageId: string): 'new' | 'work' | 'closed' | 'other' {
+  const s = stageId.toLowerCase();
+
+  if (/(won|success|done|finish|close|closed|reject|lose|lost|cancel|fail)/.test(s)) {
+    return 'closed';
+  }
+
+  if (/(new|start|incoming|draft|open)/.test(s)) {
+    return 'new';
+  }
+
+  if (/(work|process|progress|active|prepare|prepar|review|check|wait|analysis|handling)/.test(s)) {
+    return 'work';
+  }
+
+  return 'other';
+}
+
+function collectSearchText(value: unknown, acc: string[], depth = 0): void {
+  if (value == null || depth > 2) return;
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    acc.push(String(value));
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectSearchText(item, acc, depth + 1);
+    }
+    return;
+  }
+
+  if (typeof value === 'object') {
+    for (const item of Object.values(value as Record<string, unknown>)) {
+      collectSearchText(item, acc, depth + 1);
+    }
+  }
+}
+
+function dealMatchesSearch(deal: B24Deal, search?: string): boolean {
+  if (!search?.trim()) return true;
+
+  const query = search.trim().toLowerCase();
+  const values: string[] = [];
+  collectSearchText(deal, values);
+
+  const haystack = values.join(' ').toLowerCase();
+  return haystack.includes(query);
+}
+
+function dealMatchesDateRange(deal: B24Deal, dateFrom?: string, dateTo?: string): boolean {
+  const createdAt = extractDateKey(deal.DATE_CREATE);
+  if (!createdAt) return true;
+
+  if (dateFrom && createdAt < dateFrom) return false;
+  if (dateTo && createdAt > dateTo) return false;
+
+  return true;
+}
+
+function summarizeDeals(deals: B24Deal[]): DealDashboardSummary {
+  const today = localTodayKey();
+  const stageCounts = new Map<string, number>();
+
+  let inWorkCount = 0;
+  let newCount = 0;
+  let todayCount = 0;
+
+  for (const deal of deals) {
+    const stageId = String(deal.STAGE_ID ?? '').trim() || 'UNKNOWN';
+    const classification = classifyStageId(stageId);
+    const createdKey = extractDateKey(deal.DATE_CREATE);
+
+    stageCounts.set(stageId, (stageCounts.get(stageId) ?? 0) + 1);
+
+    if (classification === 'work') inWorkCount += 1;
+    if (classification === 'new') newCount += 1;
+    if (createdKey === today) todayCount += 1;
+  }
+
+  const stageStats: StageStat[] = Array.from(stageCounts.entries())
+    .map(([stageId, count]) => ({ stageId, count }))
+    .sort((a, b) => b.count - a.count || a.stageId.localeCompare(b.stageId));
+
+  const suggestedWorkingStageId =
+    stageStats.find((item) => classifyStageId(item.stageId) === 'work')?.stageId ??
+    stageStats.find((item) => classifyStageId(item.stageId) !== 'closed')?.stageId;
+
+  return {
+    total: deals.length,
+    inWorkCount,
+    newCount,
+    todayCount,
+    stageStats,
+    suggestedWorkingStageId,
+  };
+}
+
+async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 'DESC') {
+  const allDeals: B24Deal[] = [];
+  let start = 0;
+  const batchSize = 50;
+  let hasMore = true;
+
+  while (hasMore) {
+    const data = await callBitrix('crm.deal.list', {
+      order: { [sortBy]: sortOrder },
+      filter: {
+        CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,
+      },
+      select: ['*', 'UF_*'],
+      start,
+      limit: batchSize,
+    });
+
+    const batch = ((data as { result?: unknown }).result as B24Deal[] | undefined) ?? [];
+    allDeals.push(...batch);
+
+    if (batch.length < batchSize) {
+      hasMore = false;
+    } else {
+      start += batchSize;
+    }
+
+    if (start > 50000) {
+      break;
+    }
+  }
+
+  return allDeals;
 }
 
 export async function fetchDeals(
-  params: FetchDealsParams = {}
+  params: FetchDealsParams = {},
 ): Promise<FetchDealsResult> {
   const {
     page = 1,
@@ -37,89 +179,24 @@ export async function fetchDeals(
     sortOrder = 'DESC',
   } = params;
 
-  const filter: Record<string, unknown> = {
-    CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,
-  };
+  const allDeals = await loadAllDeals(sortBy, sortOrder);
 
-  if (stageId) {
-    filter['STAGE_ID'] = stageId;
-  }
+  const baseDeals = allDeals.filter(
+    (deal) =>
+      dealMatchesSearch(deal, search) &&
+      dealMatchesDateRange(deal, dateFrom, dateTo),
+  );
 
-  if (dateFrom) {
-    filter['>=DATE_CREATE'] = dateFrom;
-  }
+  const summary = summarizeDeals(baseDeals);
 
-  if (dateTo) {
-    filter['<=DATE_CREATE'] = dateTo;
-  }
+  const stageFilteredDeals = stageId
+    ? baseDeals.filter((deal) => String(deal.STAGE_ID ?? '') === stageId)
+    : baseDeals;
 
-  if (search) {
-    filter['%TITLE'] = search;
-  }
-
-  const allDeals: B24Deal[] = [];
-  let start = 0;
-  const batchSize = 50; // Bitrix24 max per request
-  let hasMore = true;
-
-  while (hasMore) {
-    let data;
-    try {
-      data = await callBitrix('crm.deal.list', {
-        order: { [sortBy]: sortOrder },
-        filter,
-        select: [
-          'ID',
-          'TITLE',
-          'STAGE_ID',
-          'CATEGORY_ID',
-          'DATE_CREATE',
-          'DATE_MODIFY',
-          'ASSIGNED_BY_ID',
-          'COMMENTS',
-          'SOURCE_ID',
-          'SOURCE_DESCRIPTION',
-        ],
-        start,
-        limit: batchSize,
-      });
-    } catch (err) {
-      console.error('[fetchDeals] Bitrix API call failed:', err);
-      throw new Error('Failed to load deals from CRM');
-    }
-
-    const batch: B24Deal[] = (data.result as B24Deal[]) || [];
-    allDeals.push(...batch);
-
-    if (batch.length < batchSize) {
-      hasMore = false;
-    } else {
-      start += batchSize;
-    }
-
-    if (start > 50000) {
-      console.warn('[fetchDeals] Safety break: exceeded 50000 items');
-      break;
-    }
-  }
-
-  // Client-side text search fallback (if Bitrix %TITLE is not sufficient)
-  let filteredDeals = allDeals;
-  if (search) {
-    const q = search.toLowerCase();
-    filteredDeals = allDeals.filter(
-      (d) =>
-        d.TITLE.toLowerCase().includes(q) ||
-        (d.COMMENTS && d.COMMENTS.toLowerCase().includes(q)) ||
-        (d.SOURCE_DESCRIPTION &&
-          d.SOURCE_DESCRIPTION.toLowerCase().includes(q))
-    );
-  }
-
-  const total = filteredDeals.length;
+  const total = stageFilteredDeals.length;
   const pageStart = (page - 1) * perPage;
   const pageEnd = pageStart + perPage;
-  const deals = filteredDeals.slice(pageStart, pageEnd);
+  const deals = stageFilteredDeals.slice(pageStart, pageEnd);
 
   return {
     deals,
@@ -127,5 +204,6 @@ export async function fetchDeals(
     page,
     perPage,
     hasNext: pageEnd < total,
+    summary,
   };
 }

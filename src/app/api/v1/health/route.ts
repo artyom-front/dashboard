@@ -3,10 +3,10 @@ import { fetchDeals } from '@/domains/bank-dashboard/api/fetchDeals';
 
 export async function GET() {
   try {
-    const deals = await fetchDeals();
+     const deals = await fetchDeals();
     return Response.json({
-      count: deals.length,
-      firstDeal: deals[0] || null,
+      count: deals.deals.length,
+      firstDeal: deals.deals[0] || null,
     });
   } catch (error) {
     return Response.json(

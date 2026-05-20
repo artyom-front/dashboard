@@ -228,9 +228,9 @@ export function BankDashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
             Заявки на облачные кассы
           </h1>
-          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+          {/* <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
             Компактный интерфейс с пастельной подложкой, мягкими акцентами и быстрыми фильтрами.
-          </p>
+          </p> */}
         </div>
 
         <div className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">

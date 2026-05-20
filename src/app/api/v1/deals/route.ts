@@ -58,8 +58,12 @@ export async function GET(request: NextRequest) {
   const dateTo = searchParams.get('dateTo')?.trim() || undefined;
 
   const sortBy: SortBy = searchParams.get('sortBy') === 'TITLE' ? 'TITLE' : 'DATE_CREATE';
-  const sortOrder: 'DESC' | 'ASC' =
-    searchParams.get('sortOrder') === 'ASC' ? 'ASC' : 'DESC';
+
+  const sortOrderParam = searchParams.get('sortOrder');
+  const sortOrder: 'ASC' | 'DESC' | undefined =
+    sortOrderParam === 'ASC' || sortOrderParam === 'DESC'
+      ? sortOrderParam
+      : undefined;
 
   try {
     const result = await fetchDeals({

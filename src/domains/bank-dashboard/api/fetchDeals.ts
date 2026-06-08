@@ -1,3 +1,5 @@
+// src/domains/bank-dashboard/api/fetchDeals.ts
+
 import { callBitrix } from '@/domains/shared/api/b24Client';
 import type {
   B24Deal,
@@ -5,7 +7,7 @@ import type {
   FetchDealsResult,
   StageStat,
 } from '@/domains/bank-dashboard/model/types';
-import { CLOUD_KASSA_CATEGORY_ID, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
+import { CLOUD_KASSA_STAGE_IDS, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
 
 export interface FetchDealsParams {
   bank?: string;
@@ -38,6 +40,10 @@ function classifyStageId(stageId: string): 'new' | 'work' | 'closed' | 'other' {
   if (status === 'Отклонена') return 'closed';
   if (status === 'В процессе интеграции') return 'work';
   return 'other';
+}
+
+function isCloudKassaDeal(deal: B24Deal): boolean {
+  return CLOUD_KASSA_STAGE_IDS.has(String(deal.STAGE_ID ?? '').trim());
 }
 
 function collectSearchText(value: unknown, acc: string[], depth = 0): void {
@@ -117,11 +123,9 @@ async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 
   let hasMore = true;
 
   while (hasMore) {
+    // НЕ фильтруем по CATEGORY_ID — фильтруем по STAGE_ID после загрузки
     const data = await callBitrix('crm.deal.list', {
       order: { [sortBy]: sortOrder },
-      filter: {
-        CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,
-      },
       select: [
         '*',
         'UF_CRM_1584459530383',
@@ -140,7 +144,10 @@ async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 
     });
 
     const batch = ((data as { result?: unknown }).result as B24Deal[] | undefined) ?? [];
-    allDeals.push(...batch);
+    
+    // Фильтруем только сделки из воронки "Облачная касса" по STAGE_ID
+    const cloudDeals = batch.filter(isCloudKassaDeal);
+    allDeals.push(...cloudDeals);
 
     if (batch.length < batchSize) {
       hasMore = false;

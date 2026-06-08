@@ -1,6 +1,8 @@
+// src/domains/bank-dashboard/model/constants.ts
+
 /**
- * Стадии воронки (CATEGORY_ID = 0, стандартная воронка).
- * Ключ = то, что приходит в STAGE_ID из API.
+ * Стадии воронки "Облачная касса" (CATEGORY_ID = 26).
+ * Эти STATUS_ID уникальны для воронки 26 и не пересекаются с другими воронками.
  */
 export const STAGE_MAP: Record<string, string> = {
   'NEW': 'Новый заказ',
@@ -18,8 +20,15 @@ export const STAGE_MAP: Record<string, string> = {
 };
 
 /**
+ * Множество стадий воронки 26 для быстрой фильтрации.
+ */
+export const CLOUD_KASSA_STAGE_IDS = new Set([
+  'NEW', '5', '10', 'FINAL_INVOICE', 'UC_ETM6IC',
+  '6', 'UC_7RGL0K', '11', 'WON', 'LOSE', '12', 'UC_79DBVD',
+]);
+
+/**
  * Цвета бейджей статусов для дашборда.
- * Группировка по смыслу, а не по точной стадии.
  */
 export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; status: string }> = {
   'NEW':           { label: 'Новый заказ',                    color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
@@ -37,10 +46,9 @@ export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; st
 };
 
 /**
- * ID воронки. 
- * Было 26 (Облачные кассы), теперь 0 (стандартная воронка).
+ * ID воронки (для справки, не используется в фильтре API).
  */
-export const CLOUD_KASSA_CATEGORY_ID = '0';
+export const CLOUD_KASSA_CATEGORY_ID = '26';
 
 /**
  * Доступ для банков.

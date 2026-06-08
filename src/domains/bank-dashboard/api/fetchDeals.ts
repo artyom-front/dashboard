@@ -5,7 +5,7 @@ import type {
   FetchDealsResult,
   StageStat,
 } from '@/domains/bank-dashboard/model/types';
-import { CLOUD_KASSA_CATEGORY_ID } from '@/domains/bank-dashboard/model/constants';
+import { CLOUD_KASSA_CATEGORY_ID, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
 
 export interface FetchDealsParams {
   bank?: string;
@@ -33,38 +33,23 @@ function localTodayKey(): string {
 }
 
 function classifyStageId(stageId: string): 'new' | 'work' | 'closed' | 'other' {
-  const s = stageId.toLowerCase();
-
-  if (/(won|success|done|finish|close|closed|reject|lose|lost|cancel|fail)/.test(s)) {
-    return 'closed';
-  }
-
-  if (/(new|start|incoming|draft|open)/.test(s)) {
-    return 'new';
-  }
-
-  if (/(work|process|progress|active|prepare|prepar|review|check|wait|analysis|handling)/.test(s)) {
-    return 'work';
-  }
-
+  const status = STAGE_STATUS_MAP[stageId]?.status;
+  if (status === 'Подключена') return 'closed';
+  if (status === 'Отклонена') return 'closed';
+  if (status === 'В процессе интеграции') return 'work';
   return 'other';
 }
 
 function collectSearchText(value: unknown, acc: string[], depth = 0): void {
   if (value == null || depth > 2) return;
-
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     acc.push(String(value));
     return;
   }
-
   if (Array.isArray(value)) {
-    for (const item of value) {
-      collectSearchText(item, acc, depth + 1);
-    }
+    for (const item of value) collectSearchText(item, acc, depth + 1);
     return;
   }
-
   if (typeof value === 'object') {
     for (const item of Object.values(value as Record<string, unknown>)) {
       collectSearchText(item, acc, depth + 1);
@@ -74,11 +59,9 @@ function collectSearchText(value: unknown, acc: string[], depth = 0): void {
 
 function dealMatchesSearch(deal: B24Deal, search?: string): boolean {
   if (!search?.trim()) return true;
-
   const query = search.trim().toLowerCase();
   const values: string[] = [];
   collectSearchText(deal, values);
-
   const haystack = values.join(' ').toLowerCase();
   return haystack.includes(query);
 }
@@ -86,17 +69,14 @@ function dealMatchesSearch(deal: B24Deal, search?: string): boolean {
 function dealMatchesDateRange(deal: B24Deal, dateFrom?: string, dateTo?: string): boolean {
   const createdAt = extractDateKey(deal.DATE_CREATE);
   if (!createdAt) return true;
-
   if (dateFrom && createdAt < dateFrom) return false;
   if (dateTo && createdAt > dateTo) return false;
-
   return true;
 }
 
 function summarizeDeals(deals: B24Deal[]): DealDashboardSummary {
   const today = localTodayKey();
   const stageCounts = new Map<string, number>();
-
   let inWorkCount = 0;
   let newCount = 0;
   let todayCount = 0;
@@ -107,7 +87,6 @@ function summarizeDeals(deals: B24Deal[]): DealDashboardSummary {
     const createdKey = extractDateKey(deal.DATE_CREATE);
 
     stageCounts.set(stageId, (stageCounts.get(stageId) ?? 0) + 1);
-
     if (classification === 'work') inWorkCount += 1;
     if (classification === 'new') newCount += 1;
     if (createdKey === today) todayCount += 1;
@@ -143,7 +122,19 @@ async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 
       filter: {
         CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,
       },
-      select: ['*', 'UF_*'],
+      select: [
+        '*',
+        'UF_CRM_1584459530383',
+        'UF_CRM_1584459905775',
+        'UF_CRM_1584459915897',
+        'UF_CRM_1584459948925',
+        'UF_CRM_1585653172826',
+        'UF_CRM_1780931799',
+        'UF_CRM_1780931836',
+        'UF_CRM_1780931855',
+        'UF_CRM_1780931961',
+        'UF_CRM_1780932003',
+      ],
       start,
       limit: batchSize,
     });
@@ -157,9 +148,7 @@ async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 
       start += batchSize;
     }
 
-    if (start > 50000) {
-      break;
-    }
+    if (start > 50000) break;
   }
 
   return allDeals;

@@ -10,19 +10,17 @@ export interface B24Deal {
   SOURCE_ID?: string;
   SOURCE_DESCRIPTION?: string;
   
-  // Существующие UF-поля
-  UF_CRM_1584459530383?: string; // ИНН
-  UF_CRM_1584459905775?: string; // Сайт
-  UF_CRM_1584459915897?: string; // CMS/Интеграция
-  UF_CRM_1584459948925?: string; // Облачная касса (старая строка)
-  UF_CRM_1585653172826?: string; // Дата связи
+  UF_CRM_1584459530383?: string;
+  UF_CRM_1584459905775?: string;
+  UF_CRM_1584459915897?: string;
+  UF_CRM_1584459948925?: string;
+  UF_CRM_1585653172826?: string;
   
-  // Новые UF-поля (DB_*)
-  UF_CRM_1780931799?: string; // DB_Сертификат (дата передачи сертификата)
-  UF_CRM_1780931836?: string; // DB_Тест (дата теста)
-  UF_CRM_1780931855?: string; // DB_Запуск (дата запуска)
-  UF_CRM_1780931961?: boolean | string; // DB_ОблачнаяКасса (boolean)
-  UF_CRM_1780932003?: string; // DB_ОблачнаяКассаТест (дата)
+  UF_CRM_1780931799?: string;
+  UF_CRM_1780931836?: string;
+  UF_CRM_1780931855?: string;
+  UF_CRM_1780931961?: boolean | string;
+  UF_CRM_1780932003?: string;
   
   [key: string]: unknown;
 }

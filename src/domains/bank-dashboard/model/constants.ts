@@ -1,34 +1,36 @@
 // src/domains/bank-dashboard/model/constants.ts
 
 /**
- * Стадии воронки "Облачная касса" (CATEGORY_ID = 26).
- * Эти STATUS_ID уникальны для воронки 26 и не пересекаются с другими воронками.
+ * Стадии воронки "Облачные кассы" (CATEGORY_ID = 26).
+ * Оригинальные коды с префиксом C26: — как было в рабочей версии.
  */
 export const STAGE_MAP: Record<string, string> = {
-  'NEW': 'Новый заказ',
-  '5': 'Счет выставлен',
-  '10': 'Счет отправлен, ожидается оплата',
-  'FINAL_INVOICE': 'Счет оплачен',
-  'UC_ETM6IC': 'Ожидание анкеты',
-  '6': 'На настройку',
-  'UC_7RGL0K': 'Название',
-  '11': 'На Документы / доставку ТО',
-  'WON': 'Продано и отгружено',
-  'LOSE': 'Отказ клиента',
-  '12': 'Внутренний заказ',
-  'UC_79DBVD': 'OLD',
+  'C26:NEW': '1. Новая заявка',
+  'C26:1': '2. Лид думает',
+  'C26:PREPARATION': '3. Счёт выставлен, ожидается оплата',
+  'C26:EXECUTING': '4. Настройка кассы в ЛК/ФНС',
+  'C26:UC_7ZSU68': '5. Интеграция Пейкипер/Прямая',
+  'C26:UC_F8TPLV': '6. Интеграция CMS/ПС',
+  'C26:WON': '7. Сделка завершена',
+  'C26:LOSE': '8. Сделка провалена',
 };
 
-/**
- * Множество стадий воронки 26 для быстрой фильтрации.
- */
-export const CLOUD_KASSA_STAGE_IDS = new Set([
-  'NEW', '5', '10', 'FINAL_INVOICE', 'UC_ETM6IC',
-  '6', 'UC_7RGL0K', '11', 'WON', 'LOSE', '12', 'UC_79DBVD',
-]);
+export const STAGE_COLORS: Record<string, string> = {
+  'C26:NEW': 'bg-[#A6DC00] text-black',
+  'C26:1': 'bg-[#FFA900] text-black',
+  'C26:PREPARATION': 'bg-[#2FC6F6] text-black',
+  'C26:EXECUTING': 'bg-[#47e4c2] text-black',
+  'C26:UC_7ZSU68': 'bg-[#f69ac1] text-black',
+  'C26:UC_F8TPLV': 'bg-[#c4baed] text-black',
+  'C26:WON': 'bg-[#7bd500] text-black',
+  'C26:LOSE': 'bg-[#FF5752] text-white',
+};
+
+export const CLOUD_KASSA_CATEGORY_ID = '26';
 
 /**
- * Цвета бейджей статусов для дашборда.
+ * Новый маппинг статусов для дашборда (без префикса C26:).
+ * API возвращает STAGE_ID без префикса, но оригинальный код использует C26:.
  */
 export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; status: string }> = {
   'NEW':           { label: 'Новый заказ',                    color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
@@ -45,14 +47,6 @@ export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; st
   'UC_79DBVD':     { label: 'OLD',                            color: 'bg-gray-100 text-gray-800',      status: 'В процессе интеграции' },
 };
 
-/**
- * ID воронки (для справки, не используется в фильтре API).
- */
-export const CLOUD_KASSA_CATEGORY_ID = '26';
-
-/**
- * Доступ для банков.
- */
 export const BANK_ACCESS: Record<string, { filterValue: string; name: string }> = {
   [process.env.BANK_TOKEN_BSPB || '']: {
     filterValue: process.env.BANK_FILTER_BSPB || '',

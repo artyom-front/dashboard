@@ -1,5 +1,3 @@
-// src/domains/bank-dashboard/api/fetchDeals.ts
-
 import { callBitrix } from '@/domains/shared/api/b24Client';
 import type {
   B24Deal,
@@ -7,7 +5,7 @@ import type {
   FetchDealsResult,
   StageStat,
 } from '@/domains/bank-dashboard/model/types';
-import { CLOUD_KASSA_STAGE_IDS, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
+import { CLOUD_KASSA_CATEGORY_ID, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
 
 export interface FetchDealsParams {
   bank?: string;
@@ -35,15 +33,17 @@ function localTodayKey(): string {
 }
 
 function classifyStageId(stageId: string): 'new' | 'work' | 'closed' | 'other' {
-  const status = STAGE_STATUS_MAP[stageId]?.status;
-  if (status === 'Подключена') return 'closed';
-  if (status === 'Отклонена') return 'closed';
-  if (status === 'В процессе интеграции') return 'work';
+  const s = stageId.toLowerCase();
+  if (/(won|success|done|finish|close|closed|reject|lose|lost|cancel|fail)/.test(s)) {
+    return 'closed';
+  }
+  if (/(new|start|incoming|draft|open)/.test(s)) {
+    return 'new';
+  }
+  if (/(work|process|progress|active|prepare|prepar|review|check|wait|analysis|handling)/.test(s)) {
+    return 'work';
+  }
   return 'other';
-}
-
-function isCloudKassaDeal(deal: B24Deal): boolean {
-  return CLOUD_KASSA_STAGE_IDS.has(String(deal.STAGE_ID ?? '').trim());
 }
 
 function collectSearchText(value: unknown, acc: string[], depth = 0): void {
@@ -123,31 +123,30 @@ async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 
   let hasMore = true;
 
   while (hasMore) {
-    // НЕ фильтруем по CATEGORY_ID — фильтруем по STAGE_ID после загрузки
     const data = await callBitrix('crm.deal.list', {
       order: { [sortBy]: sortOrder },
+      filter: {
+        CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,  // ← ВЕРНУЛ оригинальный фильтр
+      },
       select: [
         '*',
-        'UF_CRM_1584459530383',
-        'UF_CRM_1584459905775',
-        'UF_CRM_1584459915897',
-        'UF_CRM_1584459948925',
-        'UF_CRM_1585653172826',
-        'UF_CRM_1780931799',
-        'UF_CRM_1780931836',
-        'UF_CRM_1780931855',
-        'UF_CRM_1780931961',
-        'UF_CRM_1780932003',
+        'UF_CRM_1584459530383', // ИНН
+        'UF_CRM_1584459905775', // Сайт
+        'UF_CRM_1584459915897', // CMS
+        'UF_CRM_1584459948925', // Облачная касса (старая)
+        'UF_CRM_1585653172826', // Дата связи
+        'UF_CRM_1780931799',    // DB_Сертификат
+        'UF_CRM_1780931836',    // DB_Тест
+        'UF_CRM_1780931855',    // DB_Запуск
+        'UF_CRM_1780931961',    // DB_ОблачнаяКасса
+        'UF_CRM_1780932003',    // DB_ОблачнаяКассаТест
       ],
       start,
       limit: batchSize,
     });
 
     const batch = ((data as { result?: unknown }).result as B24Deal[] | undefined) ?? [];
-    
-    // Фильтруем только сделки из воронки "Облачная касса" по STAGE_ID
-    const cloudDeals = batch.filter(isCloudKassaDeal);
-    allDeals.push(...cloudDeals);
+    allDeals.push(...batch);
 
     if (batch.length < batchSize) {
       hasMore = false;

@@ -1,9 +1,10 @@
+// src\domains\bank-dashboard\ui\DealTable.tsx
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 import type { B24Deal } from '@/domains/bank-dashboard/model/types';
-import { STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
+import { STAGE_MAP } from '@/domains/bank-dashboard/model/constants';
 
 type DealTableProps = {
   data: B24Deal[];
@@ -14,6 +15,88 @@ type DealTableProps = {
   loading?: boolean;
   onPageChange: (page: number) => void;
 };
+
+// Цвета фона строки по стадии (полупрозрачные)
+const STAGE_BG_COLORS: Record<string, string> = {
+  'C26:NEW': 'bg-[#A6DC00]/15',
+  'C26:1': 'bg-[#FFA900]/15',
+  'C26:PREPARATION': 'bg-[#2FC6F6]/15',
+  'C26:EXECUTING': 'bg-[#47e4c2]/15',
+  'C26:UC_7ZSU68': 'bg-[#f69ac1]/15',
+  'C26:UC_F8TPL': 'bg-[#c4baed]/15',
+  'C26:WON': 'bg-[#7bd500]/20',
+  'C26:LOSE': 'bg-[#FF5752]/20',
+};
+
+// Цвета левой границы
+const STAGE_BORDER_COLORS: Record<string, string> = {
+  'C26:NEW': '#A6DC00',
+  'C26:1': '#FFA900',
+  'C26:PREPARATION': '#2FC6F6',
+  'C26:EXECUTING': '#47e4c2',
+  'C26:UC_7ZSU68': '#f69ac1',
+  'C26:UC_F8TPL': '#c4baed',
+  'C26:WON': '#7bd500',
+  'C26:LOSE': '#FF5752',
+};
+
+// Компонент тултипа с расшифровкой цветов
+function StageLegendTooltip() {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div 
+      className="relative inline-flex items-center ml-2"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+      {show && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg border border-border bg-card p-3 shadow-xl z-100">
+          <div className="text-xs font-medium mb-2 text-foreground">Цвета стадий:</div>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#A6DC00' }} />
+              <span className="text-foreground">Новая заявка</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#FFA900' }} />
+              <span className="text-foreground">Лид думает</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#2FC6F6' }} />
+              <span className="text-foreground">Счёт выставлен</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#47e4c2' }} />
+              <span className="text-foreground">Настройка кассы</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#f69ac1' }} />
+              <span className="text-foreground">Интеграция Paykeeper</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#c4baed' }} />
+              <span className="text-foreground">Интеграция CMS</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#7bd500' }} />
+              <span className="text-foreground">Сделка завершена</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#FF5752' }} />
+              <span className="text-foreground">Сделка провалена</span>
+            </div>
+          </div>
+          {/* Стрелка тултипа */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+            <div className="w-2 h-2 rotate-45 border-r border-b border-border bg-card" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function getValue(deal: B24Deal, keys: string[]) {
   const record = deal as B24Deal & Record<string, unknown>;
@@ -39,8 +122,8 @@ function SkeletonRow() {
   return (
     <tr className="border-b border-border">
       {Array.from({ length: 9 }).map((_, index) => (
-        <td key={index} className="px-4 py-3">
-          <div className="h-3.5 w-full animate-pulse rounded bg-muted" />
+        <td key={index} className="px-3 py-3">
+          <div className="h-4 w-full animate-pulse rounded bg-muted" />
         </td>
       ))}
     </tr>
@@ -49,22 +132,10 @@ function SkeletonRow() {
 
 function DetailCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
+    <div className="rounded-lg border border-border bg-card p-3">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 break-words text-sm text-foreground">{value}</div>
+      <div className="mt-1 break-words text-sm text-foreground">{value || '—'}</div>
     </div>
-  );
-}
-
-function StatusBadge({ stageId }: { stageId: string }) {
-  const status = STAGE_STATUS_MAP[stageId];
-  if (!status) {
-    return <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-800">{stageId}</span>;
-  }
-  return (
-    <span className={`rounded-full px-2 py-1 text-xs font-medium ${status.color}`}>
-      {status.status}
-    </span>
   );
 }
 
@@ -88,30 +159,32 @@ export function DealTable({
   return (
     <section className="card-surface soft-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
-          <div className="text-sm font-semibold text-foreground">Таблица клиентов</div>
-          <div className="text-xs text-muted-foreground">
-            Клик по строке раскрывает подробности
+        <div className="flex items-center gap-2">
+          <div>
+            <div className="text-base font-semibold text-foreground flex items-center">
+              Таблица клиентов
+              <StageLegendTooltip />
+            </div>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-sm text-muted-foreground">
           Всего: <span className="font-medium text-foreground">{total}</span>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full table-fixed text-left">
-          <thead className="border-b border-border bg-muted/30 text-[11px] uppercase tracking-wide text-muted-foreground">
+        <table className="w-full text-left">
+          <thead className="border-b border-border bg-muted/30 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="w-[8%] px-4 py-3 font-medium">№</th>
-              <th className="w-[12%] px-4 py-3 font-medium">Дата</th>
-              <th className="w-[16%] px-4 py-3 font-medium">Клиент</th>
-              <th className="w-[12%] px-4 py-3 font-medium">ИНН</th>
-              <th className="w-[14%] px-4 py-3 font-medium">Статус</th>
-              <th className="w-[12%] px-4 py-3 font-medium">Сертификат</th>
-              <th className="w-[10%] px-4 py-3 font-medium">Тест</th>
-              <th className="w-[10%] px-4 py-3 font-medium">Запуск</th>
-              <th className="w-[6%] px-4 py-3 font-medium text-center">☁️</th>
+              <th className="w-[8%] px-3 py-3 font-medium">Дата</th>
+              <th className="w-[18%] px-3 py-3 font-medium">Клиент</th>
+              <th className="w-[10%] px-3 py-3 font-medium">ИНН</th>
+              <th className="w-[12%] px-3 py-3 font-medium">Исполнитель</th>
+              <th className="w-[8%] px-3 py-3 font-medium text-center">Сертификат</th>
+              <th className="w-[8%] px-3 py-3 font-medium text-center">Тест</th>
+              <th className="w-[8%] px-3 py-3 font-medium text-center">Запуск</th>
+              <th className="w-[6%] px-3 py-3 font-medium text-center">ОК</th>
+             
             </tr>
           </thead>
 
@@ -122,6 +195,9 @@ export function DealTable({
               data.map((deal, index) => {
                 const id = deal.ID;
                 const expanded = expandedId === id;
+                const stageId = deal.STAGE_ID || '';
+                const borderColor = STAGE_BORDER_COLORS[stageId] || '#6b7280';
+                const bgColor = STAGE_BG_COLORS[stageId] || '';
 
                 return (
                   <Fragment key={String(id ?? `${page}-${index}`)}>
@@ -136,58 +212,59 @@ export function DealTable({
                           setExpandedId(expanded ? null : id);
                         }
                       }}
+                      style={{ borderLeft: `3px solid ${borderColor}` }}
                       className={[
                         'cursor-pointer border-b border-border transition-colors duration-200',
-                        expanded ? 'bg-[#f10d30]/4' : 'hover:bg-muted/40',
+                        bgColor,
+                        expanded ? 'bg-opacity-30' : 'hover:bg-opacity-40',
                       ].join(' ')}
                     >
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 py-3 align-top text-sm text-foreground">
+                        <div className="flex items-center gap-1">
                           <ChevronDown
                             className={[
                               'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
                               expanded ? 'rotate-180' : '',
                             ].join(' ')}
                           />
-                          <span className="truncate">{String(deal.ID ?? '')}</span>
+                          {formatDate(deal.DATE_CREATE)}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
-                        {formatDate(deal.DATE_CREATE)}
-                      </td>
-
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
-                        <div className="truncate" title={deal.TITLE}>
+                      <td className="px-3 py-3 align-top text-sm text-foreground">
+                        <div className="truncate font-medium max-w-[180px]" title={deal.TITLE}>
                           {deal.TITLE}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
-                        <div className="truncate" title={getValue(deal, ['UF_CRM_1584459530383'])}>
-                          {getValue(deal, ['UF_CRM_1584459530383'])}
+                      <td className="px-3 py-3 align-top text-sm text-foreground">
+                        <div className="truncate font-mono text-xs" title={getValue(deal, ['UF_CRM_1605269817'])}>
+                          {getValue(deal, ['UF_CRM_1605269817']) || '—'}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3 align-top">
-                        <StatusBadge stageId={deal.STAGE_ID} />
+                      <td className="px-3 py-3 align-top text-sm text-foreground">
+                        <div className="truncate" title={getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID'])}>
+                          {getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID']) || '—'}
+                        </div>
                       </td>
 
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
+                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
                         {formatDate(getValue(deal, ['UF_CRM_1780931799'])) || '—'}
                       </td>
 
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
+                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
                         {formatDate(getValue(deal, ['UF_CRM_1780931836'])) || '—'}
                       </td>
 
-                      <td className="px-4 py-3 align-top text-sm text-foreground">
+                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
                         {formatDate(getValue(deal, ['UF_CRM_1780931855'])) || '—'}
                       </td>
 
-                      <td className="px-4 py-3 align-top text-center text-sm text-foreground">
-                        {getValue(deal, ['UF_CRM_1780931961']) === 'Да' ? '✅' : '—'}
+                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
+                        {getValue(deal, ['UF_CRM_1777549192165']) === 'Да' ? '✅' : '❌'}
                       </td>
+                     
                     </tr>
 
                     <tr>
@@ -199,21 +276,28 @@ export function DealTable({
                           ].join(' ')}
                         >
                           <div className="overflow-hidden">
-                            <div className="border-b border-border bg-muted/25 px-4 py-4">
-                              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                                <DetailCard label="ID" value={String(deal.ID ?? '')} />
-                                <DetailCard label="Создана" value={formatDate(deal.DATE_CREATE)} />
-                                <DetailCard label="Изменена" value={formatDate(deal.DATE_MODIFY)} />
-                                <DetailCard label="Ответственный" value={getValue(deal, ['ASSIGNED_BY_ID'])} />
-                                <DetailCard label="Сайт" value={getValue(deal, ['UF_CRM_1584459905775'])} />
-                                <DetailCard label="CMS / Интеграция" value={getValue(deal, ['UF_CRM_1584459915897'])} />
-                                <DetailCard label="Облачная касса (старая)" value={getValue(deal, ['UF_CRM_1584459948925'])} />
-                                <DetailCard label="Дата связи" value={formatDate(getValue(deal, ['UF_CRM_1585653172826']))} />
+                            <div className="border-b border-border bg-muted/20 px-4 py-4">
+                              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+                                Детали заявки #{deal.ID}
+                              </div>
+                              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                <DetailCard label="Сайт" value={getValue(deal, ['UF_CRM_1696587488771'])} />
+                                <DetailCard label="CMS / Интеграция" value={getValue(deal, ['UF_CRM_1696587549662'])} />
                                 <DetailCard label="Облачная касса тест" value={formatDate(getValue(deal, ['UF_CRM_1780932003']))} />
+                                <DetailCard label="Дата связи" value={formatDate(getValue(deal, ['LAST_ACTIVITY_TIME', 'UF_CRM_1696588034362']))} />
+                                <DetailCard 
+                                  label="Контакты клиента" 
+                                  value={[
+                                    getValue(deal, ['CONTACT_NAME']),
+                                    getValue(deal, ['CONTACT_PHONE']),
+                                    getValue(deal, ['CONTACT_EMAIL']),
+                                  ].filter(Boolean).join(' / ') || '—'} 
+                                />
+                                <DetailCard label="Стадия" value={STAGE_MAP[stageId] || stageId} />
                               </div>
 
                               {getValue(deal, ['COMMENTS']) ? (
-                                <div className="mt-3 rounded-xl border border-border bg-card p-3">
+                                <div className="mt-3 rounded-lg border border-border bg-card p-3">
                                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                                     Комментарий
                                   </div>

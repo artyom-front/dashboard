@@ -2,7 +2,6 @@
 
 /**
  * Стадии воронки "Облачные кассы" (CATEGORY_ID = 26).
- * Оригинальные коды с префиксом C26: — как было в рабочей версии.
  */
 export const STAGE_MAP: Record<string, string> = {
   'C26:NEW': '1. Новая заявка',
@@ -29,22 +28,29 @@ export const STAGE_COLORS: Record<string, string> = {
 export const CLOUD_KASSA_CATEGORY_ID = '26';
 
 /**
- * Новый маппинг статусов для дашборда (без префикса C26:).
- * API возвращает STAGE_ID без префикса, но оригинальный код использует C26:.
+ * Маппинг статусов для дашборда (с префиксом C26:).
  */
 export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; status: string }> = {
-  'NEW':           { label: 'Новый заказ',                    color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  '5':             { label: 'Счет выставлен',                 color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  '10':            { label: 'Счет отправлен, ожидается оплата', color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  'FINAL_INVOICE': { label: 'Счет оплачен',                   color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  'UC_ETM6IC':     { label: 'Ожидание анкеты',                color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  '6':             { label: 'На настройку',                   color: 'bg-blue-100 text-blue-800',      status: 'В процессе интеграции' },
-  'UC_7RGL0K':     { label: 'Название',                       color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе интеграции' },
-  '11':            { label: 'На Документы / доставку ТО',     color: 'bg-blue-100 text-blue-800',      status: 'В процессе интеграции' },
-  'WON':           { label: 'Продано и отгружено',            color: 'bg-green-100 text-green-800',    status: 'Подключена' },
-  'LOSE':          { label: 'Отказ клиента',                  color: 'bg-red-100 text-red-800',        status: 'Отклонена' },
-  '12':            { label: 'Внутренний заказ',               color: 'bg-gray-100 text-gray-800',      status: 'В процессе интеграции' },
-  'UC_79DBVD':     { label: 'OLD',                            color: 'bg-gray-100 text-gray-800',      status: 'В процессе интеграции' },
+  'C26:NEW':           { label: 'Новая заявка',                    color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
+  'C26:1':             { label: 'Лид думает',                      color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
+  'C26:PREPARATION':   { label: 'Счёт выставлен',                  color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
+  'C26:EXECUTING':     { label: 'Настройка кассы',                 color: 'bg-blue-100 text-blue-800',      status: 'В процессе' },
+  'C26:UC_7ZSU68':     { label: 'Интеграция Пейкипер',             color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
+  'C26:UC_F8TPLV':     { label: 'Интеграция CMS',                  color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
+  'C26:WON':           { label: 'Сделка завершена',                color: 'bg-green-100 text-green-800',    status: 'Подключена' },
+  'C26:LOSE':          { label: 'Сделка провалена',                color: 'bg-red-100 text-red-800',        status: 'Отклонена' },
+};
+
+export const SSL_STATUSES: Record<string, string> = {
+  '539': 'Выпущен',
+  '540': 'Не выпущен',
+};
+
+export const OK_TYPES: Record<string, string> = {
+  '543': 'Первый ККМ',
+  '544': 'Сторонняя',
+  '545': 'Уточнить',
+  '546': 'Не нужна',
 };
 
 export const BANK_ACCESS: Record<string, { filterValue: string; name: string }> = {

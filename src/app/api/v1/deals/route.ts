@@ -1,3 +1,4 @@
+//  src\app\api\v1\deals\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/auth';
@@ -77,6 +78,9 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder,
     });
+
+console.log('[api/v1/deals] first deal:', result.deals[0]);
+console.log('[api/v1/deals] first deal keys:', result.deals[0] ? Object.keys(result.deals[0] as Record<string, unknown>) : []);
 
     return NextResponse.json(result);
   } catch {

@@ -1,3 +1,4 @@
+// src\domains\bank-dashboard\model\filter.ts
 import type { StageStat } from './types';
 
 export type DashboardFilters = {

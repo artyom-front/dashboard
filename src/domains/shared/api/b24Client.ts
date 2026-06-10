@@ -1,3 +1,4 @@
+//src\domains\shared\api\b24Client.ts
 import { env } from '@/domains/shared/config/env';
 
 const BASE_URL = env.bitrixWebhook;

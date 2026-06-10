@@ -1,11 +1,17 @@
+// src\domains\bank-dashboard\api\fetchDeals.ts
+
 import { callBitrix } from '@/domains/shared/api/b24Client';
 import type {
   B24Deal,
+  B24Contact,
+  B24User,
   DealDashboardSummary,
   FetchDealsResult,
   StageStat,
 } from '@/domains/bank-dashboard/model/types';
-import { CLOUD_KASSA_CATEGORY_ID, STAGE_STATUS_MAP } from '@/domains/bank-dashboard/model/constants';
+import {
+  STAGE_MAP,
+} from '@/domains/bank-dashboard/model/constants';
 
 export interface FetchDealsParams {
   bank?: string;
@@ -18,6 +24,9 @@ export interface FetchDealsParams {
   sortBy?: 'DATE_CREATE' | 'TITLE';
   sortOrder?: 'ASC' | 'DESC';
 }
+
+// Глобальный кэш пользователей
+const USER_CACHE: Record<string, string> = {};
 
 function extractDateKey(value: unknown): string | null {
   if (typeof value !== 'string' || value.length < 10) return null;
@@ -116,37 +125,128 @@ function summarizeDeals(deals: B24Deal[]): DealDashboardSummary {
   };
 }
 
+async function loadUsers(userIds: string[]): Promise<Record<string, string>> {
+  const missing = userIds.filter(id => !USER_CACHE[id]);
+
+  if (missing.length > 0) {
+    for (const id of missing) {
+      try {
+        const response = await callBitrix('user.get', { id: id });
+        
+        // callBitrix возвращает { result: [...] }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const users = (response as any)?.result as B24User[] | undefined;
+        
+        if (Array.isArray(users) && users.length > 0) {
+          const user = users[0];
+          const name = `${user.NAME || ''} ${user.LAST_NAME || ''}`.trim();
+          if (name) USER_CACHE[id] = name;
+        }
+      } catch (e) {
+        console.log(`Failed to load user ${id}:`, e);
+      }
+    }
+  }
+
+  for (const id of missing) {
+    if (!USER_CACHE[id]) {
+      USER_CACHE[id] = `ID:${id}`;
+    }
+  }
+
+  const map: Record<string, string> = {};
+  for (const id of userIds) map[id] = USER_CACHE[id] || `ID:${id}`;
+  return map;
+}
+
+async function loadContacts(contactIds: string[]): Promise<Record<string, { name: string; phone: string; email: string }>> {
+  const contactMap: Record<string, { name: string; phone: string; email: string }> = {};
+
+  for (const id of contactIds) {
+    try {
+      const response = await callBitrix('crm.contact.get', { id });
+      
+      // callBitrix возвращает { result: contact }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contact = (response as any)?.result as B24Contact | undefined;
+
+      if (contact && typeof contact === 'object') {
+        const name = `${contact.NAME || ''} ${contact.LAST_NAME || ''}`.trim();
+        const phones = (contact.PHONE || []).map(p => p.VALUE).filter(Boolean).join(', ');
+        const emails = (contact.EMAIL || []).map(e => e.VALUE).filter(Boolean).join(', ');
+        contactMap[id] = { name, phone: phones, email: emails };
+      }
+    } catch (e) {
+      contactMap[id] = { name: '', phone: '', email: '' };
+    }
+  }
+
+  return contactMap;
+}
+
+async function enrichDeals(deals: B24Deal[]): Promise<B24Deal[]> {
+  const userIds = [...new Set(deals.map(d => d.ASSIGNED_BY_ID).filter(Boolean))];
+  const contactIds = [...new Set(deals.map(d => d.CONTACT_ID).filter(Boolean))];
+
+  const [userMap, contactMap] = await Promise.all([
+    loadUsers(userIds),
+    loadContacts(contactIds),
+  ]);
+
+  for (const deal of deals) {
+    const d = deal as B24Deal & Record<string, unknown>;
+    if (deal.ASSIGNED_BY_ID && userMap[deal.ASSIGNED_BY_ID]) {
+      d.ASSIGNED_BY_NAME = userMap[deal.ASSIGNED_BY_ID];
+    }
+    if (deal.CONTACT_ID && contactMap[deal.CONTACT_ID]) {
+      const c = contactMap[deal.CONTACT_ID];
+      d.CONTACT_NAME = c.name;
+      d.CONTACT_PHONE = c.phone;
+      d.CONTACT_EMAIL = c.email;
+    }
+  }
+
+console.log('[enrichDeals] enriched deals sample:', deals[0]);
+
+  return deals;
+}
+
 async function loadAllDeals(sortBy: 'DATE_CREATE' | 'TITLE', sortOrder: 'ASC' | 'DESC') {
   const allDeals: B24Deal[] = [];
   let start = 0;
   const batchSize = 50;
   let hasMore = true;
+  const stageIds = Object.keys(STAGE_MAP);
 
   while (hasMore) {
     const data = await callBitrix('crm.deal.list', {
       order: { [sortBy]: sortOrder },
-      filter: {
-        CATEGORY_ID: CLOUD_KASSA_CATEGORY_ID,  // ← ВЕРНУЛ оригинальный фильтр
-      },
+      filter: { '@STAGE_ID': stageIds },
       select: [
         '*',
-        'UF_CRM_1584459530383', // ИНН
-        'UF_CRM_1584459905775', // Сайт
-        'UF_CRM_1584459915897', // CMS
-        'UF_CRM_1584459948925', // Облачная касса (старая)
-        'UF_CRM_1585653172826', // Дата связи
-        'UF_CRM_1780931799',    // DB_Сертификат
-        'UF_CRM_1780931836',    // DB_Тест
-        'UF_CRM_1780931855',    // DB_Запуск
-        'UF_CRM_1780931961',    // DB_ОблачнаяКасса
-        'UF_CRM_1780932003',    // DB_ОблачнаяКассаТест
+        'UF_CRM_1605269817',
+        'UF_CRM_1696587488771',
+        'UF_CRM_1696587549662',
+        'UF_CRM_1780931799',
+        'UF_CRM_1780931836',
+        'UF_CRM_1780931855',
+        'UF_CRM_1777549192165',
+        'UF_CRM_1780931961',
+        'UF_CRM_1780932003',
+        'UF_CRM_1777549089614',
+        'UF_CRM_1777552279762',
+        'UF_CRM_1696588034362',
       ],
       start,
       limit: batchSize,
     });
 
+
     const batch = ((data as { result?: unknown }).result as B24Deal[] | undefined) ?? [];
     allDeals.push(...batch);
+
+    console.log('[loadAllDeals] batch sample:', batch[0]);
+    console.log('[loadAllDeals] batch keys:', batch[0] ? Object.keys(batch[0] as Record<string, unknown>) : []);
 
     if (batch.length < batchSize) {
       hasMore = false;
@@ -191,10 +291,12 @@ export async function fetchDeals(
   const total = stageFilteredDeals.length;
   const pageStart = (page - 1) * perPage;
   const pageEnd = pageStart + perPage;
-  const deals = stageFilteredDeals.slice(pageStart, pageEnd);
+  const pageDeals = stageFilteredDeals.slice(pageStart, pageEnd);
+
+  const enrichedDeals = await enrichDeals(pageDeals);
 
   return {
-    deals,
+    deals: enrichedDeals,
     total,
     page,
     perPage,

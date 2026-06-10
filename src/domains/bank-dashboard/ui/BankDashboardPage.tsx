@@ -222,11 +222,11 @@ export function BankDashboardPage() {
     <main className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {/* <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Дашборд
-          </div>
+          </div> */}
           <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-            Заявки на облачные кассы
+            Заявки на установку платежного модуля          
           </h1>
           {/* <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
             Компактный интерфейс с пастельной подложкой, мягкими акцентами и быстрыми фильтрами.

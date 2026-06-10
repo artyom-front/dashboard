@@ -176,9 +176,7 @@ export function CompactFilterBar({
                 Активно: {activeCount}
               </span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Компактный поиск, период, статус и сортировка без лишней высоты.
-            </p>
+           
           </div>
 
           <button
@@ -193,9 +191,9 @@ export function CompactFilterBar({
         </div>
       </div>
 
-      <div className="p-4">
-        <div className="grid gap-2 xl:grid-cols-[minmax(0,2fr)_180px_190px_230px_150px_150px]">
-          <label className="block">
+      <div className="mx-auto w-full max-w-[1600px] p-4">
+        <div className="grid w-full items-end gap-3 xl:grid-cols-[minmax(0,2fr)_180px_230px_150px]">
+          <label className="block min-w-0">
             <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               <span
                 title="Ищет по ФИО, компании, ИНН, номеру заявки и комментариям"
@@ -213,31 +211,7 @@ export function CompactFilterBar({
             />
           </label>
 
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Банк
-            </span>
-
-            {bankOptions.length > 1 ? (
-              <select
-                value={filters.bank}
-                onChange={(e) => onChange({ bank: e.target.value })}
-                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:border-[#10385c] focus:ring-0"
-              >
-                {bankOptions.map((bank) => (
-                  <option key={bank} value={bank}>
-                    {prettyBankLabel(bank)}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="flex h-10 items-center rounded-xl border border-border bg-muted/35 px-3 text-sm text-muted-foreground">
-                {prettyBankLabel(filters.bank || defaultBank)}
-              </div>
-            )}
-          </label>
-
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Статус
             </span>
@@ -256,7 +230,7 @@ export function CompactFilterBar({
             </select>
           </label>
 
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -269,18 +243,18 @@ export function CompactFilterBar({
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => onChange({ dateFrom: e.target.value })}
-                className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:border-[#10385c] focus:ring-0"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:border-[#10385c] focus:ring-0"
               />
               <input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => onChange({ dateTo: e.target.value })}
-                className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:border-[#10385c] focus:ring-0"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:border-[#10385c] focus:ring-0"
               />
             </div>
           </label>
 
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Сортировка
             </span>
@@ -298,26 +272,6 @@ export function CompactFilterBar({
               <option value="ASC">Сначала старые</option>
             </select>
           </label>
-
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={() => {
-                if (canUseWorkingStage) {
-                  onChange({ stageId: workingStageId! });
-                }
-              }}
-              aria-disabled={!canUseWorkingStage}
-              className={[
-                'h-10 w-full rounded-xl border px-3 text-sm font-medium transition',
-                canUseWorkingStage
-                  ? 'border-[#10385c]/20 bg-[#10385c]/8 text-[#10385c] hover:bg-[#10385c]/12'
-                  : 'cursor-not-allowed border-border bg-muted/35 text-muted-foreground',
-              ].join(' ')}
-            >
-              В работе
-            </button>
-          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">

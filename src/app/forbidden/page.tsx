@@ -1,3 +1,5 @@
+// src\app\forbidden\page.tsx
+
 import Link from 'next/link';
 import { ThemeToggle } from '@/domains/shared/ui/ThemeToggle';
 

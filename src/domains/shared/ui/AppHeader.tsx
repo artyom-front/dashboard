@@ -1,3 +1,5 @@
+// src\domains\shared\ui\AppHeader.tsx
+
 'use client';
 
 import Link from 'next/link';

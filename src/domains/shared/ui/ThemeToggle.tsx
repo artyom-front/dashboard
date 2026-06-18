@@ -1,25 +1,24 @@
-// src/domains/shared/ui/ThemeToggle.tsx
 'use client';
 
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="w-9 h-9" />;
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
+  if (!mounted) return <Button variant="outline" size="icon" disabled><div className="h-4 w-4 animate-pulse rounded-full bg-muted" /></Button>;
+
+  const isDark = resolvedTheme === 'dark';
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-    >
-      {theme === 'dark' ? '☀️' : '🌙'}
+    <Button variant="outline" size="icon" onClick={() => setTheme(isDark ? 'light' : 'dark')} title={isDark ? 'Светлая тема' : 'Тёмная тема'} aria-label={isDark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}>
+      {isDark ? '☀️' : '🌙'}
     </Button>
   );
 }

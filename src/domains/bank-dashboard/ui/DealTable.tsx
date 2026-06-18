@@ -1,4 +1,3 @@
-// src\domains\bank-dashboard\ui\DealTable.tsx
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
@@ -6,351 +5,43 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import type { B24Deal } from '@/domains/bank-dashboard/model/types';
 import { STAGE_MAP } from '@/domains/bank-dashboard/model/constants';
 
-type DealTableProps = {
-  data: B24Deal[];
-  total: number;
-  page: number;
-  perPage: number;
-  hasNext: boolean;
-  loading?: boolean;
-  onPageChange: (page: number) => void;
-};
+type DealTableProps = { data: B24Deal[]; total: number; page: number; perPage: number; hasNext: boolean; loading?: boolean; onPageChange: (page: number) => void; };
 
-// Цвета фона строки по стадии (полупрозрачные)
-const STAGE_BG_COLORS: Record<string, string> = {
-  'C26:NEW': 'bg-[#A6DC00]/15',
-  'C26:1': 'bg-[#FFA900]/15',
-  'C26:PREPARATION': 'bg-[#2FC6F6]/15',
-  'C26:EXECUTING': 'bg-[#47e4c2]/15',
-  'C26:UC_7ZSU68': 'bg-[#f69ac1]/15',
-  'C26:UC_F8TPL': 'bg-[#c4baed]/15',
-  'C26:WON': 'bg-[#7bd500]/20',
-  'C26:LOSE': 'bg-[#FF5752]/20',
-};
+const STAGE_BG_COLORS: Record<string, string> = { 'C26:NEW': 'bg-[#A6DC00]/15', 'C26:1': 'bg-[#FFA900]/15', 'C26:PREPARATION': 'bg-[#2FC6F6]/15', 'C26:EXECUTING': 'bg-[#47e4c2]/15', 'C26:UC_7ZSU68': 'bg-[#f69ac1]/15', 'C26:UC_F8TPL': 'bg-[#c4baed]/15', 'C26:WON': 'bg-[#7bd500]/20', 'C26:LOSE': 'bg-[#FF5752]/20' };
+const STAGE_BORDER_COLORS: Record<string, string> = { 'C26:NEW': '#A6DC00', 'C26:1': '#FFA900', 'C26:PREPARATION': '#2FC6F6', 'C26:EXECUTING': '#47e4c2', 'C26:UC_7ZSU68': '#f69ac1', 'C26:UC_F8TPL': '#c4baed', 'C26:WON': '#7bd500', 'C26:LOSE': '#FF5752' };
 
-// Цвета левой границы
-const STAGE_BORDER_COLORS: Record<string, string> = {
-  'C26:NEW': '#A6DC00',
-  'C26:1': '#FFA900',
-  'C26:PREPARATION': '#2FC6F6',
-  'C26:EXECUTING': '#47e4c2',
-  'C26:UC_7ZSU68': '#f69ac1',
-  'C26:UC_F8TPL': '#c4baed',
-  'C26:WON': '#7bd500',
-  'C26:LOSE': '#FF5752',
-};
+function StageLegendTooltip() { const [show, setShow] = useState(false); return (<div className="relative inline-flex items-center ml-2" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}><HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />{show && (<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg border border-border bg-card p-3 shadow-xl z-50"><div className="text-xs font-medium mb-2 text-foreground">Цвета стадий:</div><div className="space-y-1.5 text-xs">{[['#A6DC00','Новая заявка'],['#FFA900','Лид думает'],['#2FC6F6','Счёт выставлен'],['#47e4c2','Настройка кассы'],['#f69ac1','Интеграция Paykeeper'],['#c4baed','Интеграция CMS'],['#7bd500','Сделка завершена'],['#FF5752','Сделка провалена']].map(([c,l])=>(<div key={c} className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm shrink-0" style={{backgroundColor:c}}/><span className="text-foreground">{l}</span></div>))}</div><div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px"><div className="w-2 h-2 rotate-45 border-r border-b border-border bg-card"/></div></div>)}</div>); }
 
-// Компонент тултипа с расшифровкой цветов
-function StageLegendTooltip() {
-  const [show, setShow] = useState(false);
+function getValue(deal: B24Deal, keys: string[]) { const record = deal as B24Deal & Record<string, unknown>; for (const key of keys) { const value = record[key]; if (typeof value === 'string' || typeof value === 'number') { const text = String(value); if (text.trim()) return text; } if (typeof value === 'boolean') return value ? 'Да' : 'Нет'; } return ''; }
+function formatDate(value: string | undefined | null): string { if (!value || value.length < 10) return ''; return value.slice(0, 10).split('-').reverse().join('.'); }
+function SkeletonRow() { return (<tr className="border-b border-border">{Array.from({ length: 8 }).map((_, i) => (<td key={i} className="px-3 py-3"><div className="h-4 w-full animate-pulse rounded bg-muted" /></td>))}</tr>); }
+function DetailCard({ label, value }: { label: string; value: string }) { return (<div className="rounded-lg border border-border bg-card p-3"><div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div><div className="mt-1 break-words text-sm text-foreground">{value || '—'}</div></div>); }
 
-  return (
-    <div 
-      className="relative inline-flex items-center ml-2"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
-      {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg border border-border bg-card p-3 shadow-xl z-100">
-          <div className="text-xs font-medium mb-2 text-foreground">Цвета стадий:</div>
-          <div className="space-y-1.5 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#A6DC00' }} />
-              <span className="text-foreground">Новая заявка</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#FFA900' }} />
-              <span className="text-foreground">Лид думает</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#2FC6F6' }} />
-              <span className="text-foreground">Счёт выставлен</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#47e4c2' }} />
-              <span className="text-foreground">Настройка кассы</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#f69ac1' }} />
-              <span className="text-foreground">Интеграция Paykeeper</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#c4baed' }} />
-              <span className="text-foreground">Интеграция CMS</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#7bd500' }} />
-              <span className="text-foreground">Сделка завершена</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: '#FF5752' }} />
-              <span className="text-foreground">Сделка провалена</span>
-            </div>
-          </div>
-          {/* Стрелка тултипа */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-            <div className="w-2 h-2 rotate-45 border-r border-b border-border bg-card" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function getValue(deal: B24Deal, keys: string[]) {
-  const record = deal as B24Deal & Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' || typeof value === 'number') {
-      const text = String(value);
-      if (text.trim()) return text;
-    }
-    if (typeof value === 'boolean') {
-      return value ? 'Да' : 'Нет';
-    }
-  }
-  return '';
-}
-
-function formatDate(value: string | undefined | null): string {
-  if (!value || value.length < 10) return '';
-  return value.slice(0, 10).split('-').reverse().join('.');
-}
-
-function SkeletonRow() {
-  return (
-    <tr className="border-b border-border">
-      {Array.from({ length: 9 }).map((_, index) => (
-        <td key={index} className="px-3 py-3">
-          <div className="h-4 w-full animate-pulse rounded bg-muted" />
-        </td>
-      ))}
-    </tr>
-  );
-}
-
-function DetailCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 break-words text-sm text-foreground">{value || '—'}</div>
-    </div>
-  );
-}
-
-export function DealTable({
-  data,
-  total,
-  page,
-  perPage,
-  hasNext,
-  loading = false,
-  onPageChange,
-}: DealTableProps) {
+export function DealTable({ data, total, page, perPage, hasNext, loading = false, onPageChange }: DealTableProps) {
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
-
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const canPrev = page > 1 && !loading;
   const canNext = hasNext && !loading;
-
   const skeletonRows = useMemo(() => Array.from({ length: 8 }), []);
 
   return (
     <section className="card-surface soft-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div>
-            <div className="text-base font-semibold text-foreground flex items-center">
-              Таблица клиентов
-              <StageLegendTooltip />
-            </div>
-          </div>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Всего: <span className="font-medium text-foreground">{total}</span>
-        </div>
+        <div className="text-base font-semibold text-foreground flex items-center">Таблица клиентов<StageLegendTooltip /></div>
+        <div className="text-sm text-muted-foreground">Всего: <span className="font-medium text-foreground">{total}</span></div>
       </div>
-
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="border-b border-border bg-muted/30 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="w-[8%] px-3 py-3 font-medium">Дата</th>
-              <th className="w-[18%] px-3 py-3 font-medium">Клиент</th>
-              <th className="w-[10%] px-3 py-3 font-medium">ИНН</th>
-              <th className="w-[12%] px-3 py-3 font-medium">Исполнитель</th>
-              <th className="w-[8%] px-3 py-3 font-medium text-center">Сертификат</th>
-              <th className="w-[8%] px-3 py-3 font-medium text-center">Тест</th>
-              <th className="w-[8%] px-3 py-3 font-medium text-center">Запуск</th>
-              <th className="w-[6%] px-3 py-3 font-medium text-center">ОК</th>
-             
-            </tr>
-          </thead>
-
+          <thead className="border-b border-border bg-muted/30 text-xs uppercase tracking-wide text-muted-foreground"><tr><th className="w-[8%] px-3 py-3 font-medium">Дата</th><th className="w-[18%] px-3 py-3 font-medium">Клиент</th><th className="w-[10%] px-3 py-3 font-medium">ИНН</th><th className="w-[12%] px-3 py-3 font-medium">Исполнитель</th><th className="w-[8%] px-3 py-3 font-medium text-center">Сертификат</th><th className="w-[8%] px-3 py-3 font-medium text-center">Тест</th><th className="w-[8%] px-3 py-3 font-medium text-center">Запуск</th><th className="w-[6%] px-3 py-3 font-medium text-center">ОК</th></tr></thead>
           <tbody>
-            {loading && data.length === 0 ? (
-              skeletonRows.map((_, index) => <SkeletonRow key={index} />)
-            ) : data.length > 0 ? (
-              data.map((deal, index) => {
-                const id = deal.ID;
-                const expanded = expandedId === id;
-                const stageId = deal.STAGE_ID || '';
-                const borderColor = STAGE_BORDER_COLORS[stageId] || '#6b7280';
-                const bgColor = STAGE_BG_COLORS[stageId] || '';
-
-                return (
-                  <Fragment key={String(id ?? `${page}-${index}`)}>
-                    <tr
-                      role="button"
-                      tabIndex={0}
-                      aria-expanded={expanded}
-                      onClick={() => setExpandedId(expanded ? null : id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setExpandedId(expanded ? null : id);
-                        }
-                      }}
-                      style={{ borderLeft: `3px solid ${borderColor}` }}
-                      className={[
-                        'cursor-pointer border-b border-border transition-colors duration-200',
-                        bgColor,
-                        expanded ? 'bg-opacity-30' : 'hover:bg-opacity-40',
-                      ].join(' ')}
-                    >
-                      <td className="px-3 py-3 align-top text-sm text-foreground">
-                        <div className="flex items-center gap-1">
-                          <ChevronDown
-                            className={[
-                              'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                              expanded ? 'rotate-180' : '',
-                            ].join(' ')}
-                          />
-                          {formatDate(deal.DATE_CREATE)}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-sm text-foreground">
-                        <div className="truncate font-medium max-w-[180px]" title={deal.TITLE}>
-                          {deal.TITLE}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-sm text-foreground">
-                        <div className="truncate font-mono text-xs" title={getValue(deal, ['UF_CRM_1605269817'])}>
-                          {getValue(deal, ['UF_CRM_1605269817']) || '—'}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-sm text-foreground">
-                        <div className="truncate" title={getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID'])}>
-                          {getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID']) || '—'}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
-                        {formatDate(getValue(deal, ['UF_CRM_1780931799'])) || '—'}
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
-                        {formatDate(getValue(deal, ['UF_CRM_1780931836'])) || '—'}
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
-                        {formatDate(getValue(deal, ['UF_CRM_1780931855'])) || '—'}
-                      </td>
-
-                      <td className="px-3 py-3 align-top text-center text-sm text-foreground">
-                        {getValue(deal, ['UF_CRM_1777549192165']) === 'Да' ? '✅' : '❌'}
-                      </td>
-                     
-                    </tr>
-
-                    <tr>
-                      <td colSpan={9} className="p-0">
-                        <div
-                          className={[
-                            'grid overflow-hidden transition-all duration-300 ease-out',
-                            expanded ? 'grid-rows-[1fr] opacity-100' : 'grid grid-rows-[0fr] opacity-0',
-                          ].join(' ')}
-                        >
-                          <div className="overflow-hidden">
-                            <div className="border-b border-border bg-muted/20 px-4 py-4">
-                              <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-                                Детали заявки #{deal.ID}
-                              </div>
-                              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                <DetailCard label="Сайт" value={getValue(deal, ['UF_CRM_1696587488771'])} />
-                                <DetailCard label="CMS / Интеграция" value={getValue(deal, ['UF_CRM_1696587549662'])} />
-                                <DetailCard label="Облачная касса тест" value={formatDate(getValue(deal, ['UF_CRM_1780932003']))} />
-                                <DetailCard label="Дата связи" value={formatDate(getValue(deal, ['LAST_ACTIVITY_TIME', 'UF_CRM_1696588034362']))} />
-                                <DetailCard 
-                                  label="Контакты клиента" 
-                                  value={[
-                                    getValue(deal, ['CONTACT_NAME']),
-                                    getValue(deal, ['CONTACT_PHONE']),
-                                    getValue(deal, ['CONTACT_EMAIL']),
-                                  ].filter(Boolean).join(' / ') || '—'} 
-                                />
-                                <DetailCard label="Стадия" value={STAGE_MAP[stageId] || stageId} />
-                              </div>
-
-                              {getValue(deal, ['COMMENTS']) ? (
-                                <div className="mt-3 rounded-lg border border-border bg-card p-3">
-                                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                    Комментарий
-                                  </div>
-                                  <div className="mt-1 whitespace-pre-wrap break-words text-sm text-foreground">
-                                    {getValue(deal, ['COMMENTS'])}
-                                  </div>
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </Fragment>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={9} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Нет заявок по выбранным условиям
-                </td>
-              </tr>
-            )}
+            {loading && data.length === 0 ? skeletonRows.map((_, i) => <SkeletonRow key={i} />) : data.length > 0 ? data.map((deal, index) => { const id = deal.ID; const expanded = expandedId === id; const stageId = deal.STAGE_ID || ''; const borderColor = STAGE_BORDER_COLORS[stageId] || '#6b7280'; const bgColor = STAGE_BG_COLORS[stageId] || ''; return (<Fragment key={String(id ?? `${page}-${index}`)}><tr role="button" tabIndex={0} aria-expanded={expanded} onClick={() => setExpandedId(expanded ? null : id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(expanded ? null : id); } }} style={{ borderLeft: `3px solid ${borderColor}` }} className={['cursor-pointer border-b border-border transition-colors duration-200', bgColor, expanded ? 'bg-opacity-30' : 'hover:bg-opacity-40'].join(' ')}><td className="px-3 py-3 align-top text-sm text-foreground"><div className="flex items-center gap-1"><ChevronDown className={['h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200', expanded ? 'rotate-180' : ''].join(' ')} />{formatDate(deal.DATE_CREATE)}</div></td><td className="px-3 py-3 align-top text-sm text-foreground"><div className="truncate font-medium max-w-[180px]" title={deal.TITLE}>{deal.TITLE}</div></td><td className="px-3 py-3 align-top text-sm text-foreground"><div className="truncate font-mono text-xs" title={getValue(deal, ['UF_CRM_1605269817'])}>{getValue(deal, ['UF_CRM_1605269817']) || '—'}</div></td><td className="px-3 py-3 align-top text-sm text-foreground"><div className="truncate" title={getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID'])}>{getValue(deal, ['ASSIGNED_BY_NAME', 'ASSIGNED_BY_ID']) || '—'}</div></td><td className="px-3 py-3 align-top text-center text-sm text-foreground">{formatDate(getValue(deal, ['UF_CRM_1780931799'])) || '—'}</td><td className="px-3 py-3 align-top text-center text-sm text-foreground">{formatDate(getValue(deal, ['UF_CRM_1780931836'])) || '—'}</td><td className="px-3 py-3 align-top text-center text-sm text-foreground">{formatDate(getValue(deal, ['UF_CRM_1780931855'])) || '—'}</td><td className="px-3 py-3 align-top text-center text-sm text-foreground">{getValue(deal, ['UF_CRM_1777549192165']) === 'Да' ? '✅' : '❌'}</td></tr><tr><td colSpan={8} className="p-0"><div className={['grid overflow-hidden transition-all duration-300 ease-out', expanded ? 'grid-rows-[1fr] opacity-100' : 'grid grid-rows-[0fr] opacity-0'].join(' ')}><div className="overflow-hidden"><div className="border-b border-border bg-muted/20 px-4 py-4"><div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Детали заявки #{deal.ID}</div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><DetailCard label="Сайт" value={getValue(deal, ['UF_CRM_1696587488771'])} /><DetailCard label="CMS / Интеграция" value={getValue(deal, ['UF_CRM_1696587549662'])} /><DetailCard label="Облачная касса тест" value={formatDate(getValue(deal, ['UF_CRM_1780932003']))} /><DetailCard label="Дата связи" value={formatDate(getValue(deal, ['LAST_ACTIVITY_TIME', 'UF_CRM_1696588034362']))} /><DetailCard label="Контакты клиента" value={[getValue(deal, ['CONTACT_NAME']), getValue(deal, ['CONTACT_PHONE']), getValue(deal, ['CONTACT_EMAIL'])].filter(Boolean).join(' / ') || '—'} /><DetailCard label="Стадия" value={STAGE_MAP[stageId] || stageId} /></div>{getValue(deal, ['COMMENTS']) ? (<div className="mt-3 rounded-lg border border-border bg-card p-3"><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Комментарий</div><div className="mt-1 whitespace-pre-wrap break-words text-sm text-foreground">{getValue(deal, ['COMMENTS'])}</div></div>) : null}</div></div></div></td></tr></Fragment>); }) : (<tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">Нет заявок по выбранным условиям</td></tr>)}
           </tbody>
         </table>
       </div>
-
       <div className="flex items-center justify-between border-t border-border px-4 py-3">
-        <button
-          type="button"
-          aria-disabled={!canPrev}
-          onClick={() => {
-            if (canPrev) onPageChange(page - 1);
-          }}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Назад
-        </button>
-
-        <div className="text-sm text-muted-foreground">
-          Страница {page} из {totalPages}
-        </div>
-
-        <button
-          type="button"
-          aria-disabled={!canNext}
-          onClick={() => {
-            if (canNext) onPageChange(page + 1);
-          }}
-          className="rounded-xl border border-border bg-card px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Вперёд
-        </button>
+        <button type="button" aria-disabled={!canPrev} onClick={() => { if (canPrev) onPageChange(page - 1); }} className="rounded-xl border border-border bg-card px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">Назад</button>
+        <div className="text-sm text-muted-foreground">Страница {page} из {totalPages}</div>
+        <button type="button" aria-disabled={!canNext} onClick={() => { if (canNext) onPageChange(page + 1); }} className="rounded-xl border border-border bg-card px-3 py-2 text-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">Вперёд</button>
       </div>
     </section>
   );

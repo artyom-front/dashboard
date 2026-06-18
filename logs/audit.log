@@ -10,3 +10,5 @@
 {"ts":"2026-05-20T09:57:14.639Z","action":"auth.denied","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}
 {"ts":"2026-05-20T09:57:30.591Z","action":"auth.denied","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}
 {"ts":"2026-05-20T09:58:09.581Z","action":"auth.denied","subjectHash":"2bcec0437d5d3d016804d3f2871ac60a3ff198bc2718376e3b8c7f4505a1e115","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}
+{"ts":"2026-06-18T19:46:39.941Z","action":"auth.denied","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}
+{"ts":"2026-06-18T19:46:59.870Z","action":"auth.denied","subjectHash":"0bab6fef08dbb264f48e621ec6b595dc428d88e490e13db055ad5dec18f7b50f","meta":{"reason":"allowlist_miss","resource":"auth.authorize","bank":null}}

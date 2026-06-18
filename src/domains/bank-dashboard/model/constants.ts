@@ -1,61 +1,8 @@
-// src/domains/bank-dashboard/model/constants.ts
-
-/**
- * Стадии воронки "Облачные кассы" (CATEGORY_ID = 26).
- */
-export const STAGE_MAP: Record<string, string> = {
-  'C26:NEW': '1. Новая заявка',
-  'C26:1': '2. Лид думает',
-  'C26:PREPARATION': '3. Счёт выставлен, ожидается оплата',
-  'C26:EXECUTING': '4. Настройка кассы в ЛК/ФНС',
-  'C26:UC_7ZSU68': '5. Интеграция Пейкипер/Прямая',
-  'C26:UC_F8TPLV': '6. Интеграция CMS/ПС',
-  'C26:WON': '7. Сделка завершена',
-  'C26:LOSE': '8. Сделка провалена',
-};
-
-export const STAGE_COLORS: Record<string, string> = {
-  'C26:NEW': 'bg-[#A6DC00] text-black',
-  'C26:1': 'bg-[#FFA900] text-black',
-  'C26:PREPARATION': 'bg-[#2FC6F6] text-black',
-  'C26:EXECUTING': 'bg-[#47e4c2] text-black',
-  'C26:UC_7ZSU68': 'bg-[#f69ac1] text-black',
-  'C26:UC_F8TPLV': 'bg-[#c4baed] text-black',
-  'C26:WON': 'bg-[#7bd500] text-black',
-  'C26:LOSE': 'bg-[#FF5752] text-white',
-};
-
+export const STAGE_MAP: Record<string, string> = { 'C26:NEW': '1. Новая заявка', 'C26:1': '2. Лид думает', 'C26:PREPARATION': '3. Счёт выставлен, ожидается оплата', 'C26:EXECUTING': '4. Настройка кассы в ЛК/ФНС', 'C26:UC_7ZSU68': '5. Интеграция Пейкипер/Прямая', 'C26:UC_F8TPLV': '6. Интеграция CMS/ПС', 'C26:WON': '7. Сделка завершена', 'C26:LOSE': '8. Сделка провалена' };
+export const STAGE_COLORS: Record<string, string> = { 'C26:NEW': 'bg-[#A6DC00] text-black', 'C26:1': 'bg-[#FFA900] text-black', 'C26:PREPARATION': 'bg-[#2FC6F6] text-black', 'C26:EXECUTING': 'bg-[#47e4c2] text-black', 'C26:UC_7ZSU68': 'bg-[#f69ac1] text-black', 'C26:UC_F8TPLV': 'bg-[#c4baed] text-black', 'C26:WON': 'bg-[#7bd500] text-black', 'C26:LOSE': 'bg-[#FF5752] text-white' };
 export const CLOUD_KASSA_CATEGORY_ID = '26';
-
-/**
- * Маппинг статусов для дашборда (с префиксом C26:).
- */
-export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; status: string }> = {
-  'C26:NEW':           { label: 'Новая заявка',                    color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
-  'C26:1':             { label: 'Лид думает',                      color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
-  'C26:PREPARATION':   { label: 'Счёт выставлен',                  color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
-  'C26:EXECUTING':     { label: 'Настройка кассы',                 color: 'bg-blue-100 text-blue-800',      status: 'В процессе' },
-  'C26:UC_7ZSU68':     { label: 'Интеграция Пейкипер',             color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
-  'C26:UC_F8TPLV':     { label: 'Интеграция CMS',                  color: 'bg-yellow-100 text-yellow-800',  status: 'В процессе' },
-  'C26:WON':           { label: 'Сделка завершена',                color: 'bg-green-100 text-green-800',    status: 'Подключена' },
-  'C26:LOSE':          { label: 'Сделка провалена',                color: 'bg-red-100 text-red-800',        status: 'Отклонена' },
-};
-
-export const SSL_STATUSES: Record<string, string> = {
-  '539': 'Выпущен',
-  '540': 'Не выпущен',
-};
-
-export const OK_TYPES: Record<string, string> = {
-  '543': 'Первый ККМ',
-  '544': 'Сторонняя',
-  '545': 'Уточнить',
-  '546': 'Не нужна',
-};
-
-export const BANK_ACCESS: Record<string, { filterValue: string; name: string }> = {
-  [process.env.BANK_TOKEN_BSPB || '']: {
-    filterValue: process.env.BANK_FILTER_BSPB || '',
-    name: 'Банк СПБ',
-  },
-};
+export const STAGE_STATUS_MAP: Record<string, { label: string; color: string; status: string }> = { 'C26:NEW': { label: 'Новая заявка', color: 'bg-yellow-100 text-yellow-800', status: 'В процессе' }, 'C26:1': { label: 'Лид думает', color: 'bg-yellow-100 text-yellow-800', status: 'В процессе' }, 'C26:PREPARATION': { label: 'Счёт выставлен', color: 'bg-yellow-100 text-yellow-800', status: 'В процессе' }, 'C26:EXECUTING': { label: 'Настройка кассы', color: 'bg-blue-100 text-blue-800', status: 'В процессе' }, 'C26:UC_7ZSU68': { label: 'Интеграция Пейкипер', color: 'bg-yellow-100 text-yellow-800', status: 'В процессе' }, 'C26:UC_F8TPLV': { label: 'Интеграция CMS', color: 'bg-yellow-100 text-yellow-800', status: 'В процессе' }, 'C26:WON': { label: 'Сделка завершена', color: 'bg-green-100 text-green-800', status: 'Подключена' }, 'C26:LOSE': { label: 'Сделка провалена', color: 'bg-red-100 text-red-800', status: 'Отклонена' } };
+export const SSL_STATUSES: Record<string, string> = { '539': 'Выпущен', '540': 'Не выпущен' };
+export const OK_TYPES: Record<string, string> = { '543': 'Первый ККМ', '544': 'Сторонняя', '545': 'Уточнить', '546': 'Не нужна' };
+export const BANK_FILTERS: Record<string, Record<string, unknown>> = { bspb: { SOURCE_ID: 'bspb' }, sber: { SOURCE_ID: 'sber' }, vtb: { SOURCE_ID: 'vtb' }, alfa: { SOURCE_ID: 'alfa' }, tinkoff: { SOURCE_ID: 'tinkoff' }, raiff: { SOURCE_ID: 'raiff' }, otkritie: { SOURCE_ID: 'otkritie' }, psb: { SOURCE_ID: 'psb' } };
+export const BANK_NAMES: Record<string, string> = { bspb: 'Банк СПБ', sber: 'СберБанк', vtb: 'ВТБ', alfa: 'Альфа-Банк', tinkoff: 'Т-Банк', raiff: 'Райффайзен', otkritie: 'Открытие', psb: 'Промсвязьбанк' };

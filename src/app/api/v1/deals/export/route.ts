@@ -1,5 +1,3 @@
-// src\app\api\v1\deals\export\route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/auth';
@@ -22,13 +20,29 @@ function toCsv(rows: Array<Record<string, unknown>>) {
     'ID',
     'TITLE',
     'STAGE_ID',
-    'CATEGORY_ID',
+    'STAGE_NAME',
     'DATE_CREATE',
     'DATE_MODIFY',
     'ASSIGNED_BY_ID',
+    'ASSIGNED_BY_NAME',
+    'CONTACT_NAME',
+    'CONTACT_PHONE',
+    'CONTACT_EMAIL',
     'COMMENTS',
     'SOURCE_ID',
     'SOURCE_DESCRIPTION',
+    'INN',
+    'SITE',
+    'INTEGRATION',
+    'CERT_DATE',
+    'TEST_DATE',
+    'LAUNCH_DATE',
+    'NEED_OK',
+    'INSTALLED_OK',
+    'OK_TEST_DATE',
+    'SSL_STATUS',
+    'OK_TYPE',
+    'LAST_CONTACT',
   ];
 
   const lines = [
@@ -101,7 +115,40 @@ export async function GET(request: NextRequest) {
       sortOrder: 'DESC',
     });
 
-    const csv = toCsv(result.deals as Array<Record<string, unknown>>);
+    // Map deals to flat export format with UF fields
+    const exportRows = result.deals.map((deal) => {
+      const d = deal as Record<string, unknown>;
+      return {
+        ID: d.ID,
+        TITLE: d.TITLE,
+        STAGE_ID: d.STAGE_ID,
+        STAGE_NAME: d.STAGE_ID,
+        DATE_CREATE: d.DATE_CREATE,
+        DATE_MODIFY: d.DATE_MODIFY,
+        ASSIGNED_BY_ID: d.ASSIGNED_BY_ID,
+        ASSIGNED_BY_NAME: d.ASSIGNED_BY_NAME || d.ASSIGNED_BY_ID,
+        CONTACT_NAME: d.CONTACT_NAME || '',
+        CONTACT_PHONE: d.CONTACT_PHONE || '',
+        CONTACT_EMAIL: d.CONTACT_EMAIL || '',
+        COMMENTS: d.COMMENTS,
+        SOURCE_ID: d.SOURCE_ID,
+        SOURCE_DESCRIPTION: d.SOURCE_DESCRIPTION,
+        INN: d.UF_CRM_1605269817,
+        SITE: d.UF_CRM_1696587488771,
+        INTEGRATION: d.UF_CRM_1696587549662,
+        CERT_DATE: d.UF_CRM_1780931799,
+        TEST_DATE: d.UF_CRM_1780931836,
+        LAUNCH_DATE: d.UF_CRM_1780931855,
+        NEED_OK: d.UF_CRM_1777549192165,
+        INSTALLED_OK: d.UF_CRM_1780931961,
+        OK_TEST_DATE: d.UF_CRM_1780932003,
+        SSL_STATUS: d.UF_CRM_1777549089614,
+        OK_TYPE: d.UF_CRM_1777552279762,
+        LAST_CONTACT: d.UF_CRM_1696588034362 || d.LAST_ACTIVITY_TIME,
+      };
+    });
+
+    const csv = toCsv(exportRows);
 
     auditExport({
       email,
@@ -114,7 +161,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="deals-export.csv"`,
+        'Content-Disposition': `attachment; filename="deals-export-${requestedBank}-${new Date().toISOString().slice(0, 10)}.csv"`,
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         Pragma: 'no-cache',
         Expires: '0',

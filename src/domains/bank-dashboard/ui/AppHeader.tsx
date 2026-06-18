@@ -1,5 +1,4 @@
-
-
+// src\domains\bank-dashboard\ui\AppHeader.tsx
 'use client';
 
 import Link from 'next/link';

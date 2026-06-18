@@ -8,7 +8,7 @@ import { IdleLogout } from '@/domains/shared/ui/IdleLogout';
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider refetchInterval={60 * 5} refetchOnWindowFocus>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <IdleLogout idleTimeoutMs={15 * 60 * 1000} />
         {children}
       </ThemeProvider>

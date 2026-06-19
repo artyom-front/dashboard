@@ -17,6 +17,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+    signOut: '/login',
   },
   providers: [
     CredentialsProvider({
@@ -91,5 +92,10 @@ export const authOptions: NextAuthOptions = {
 
       return session;
     },
+    async redirect({ url, baseUrl }) {
+    if (url.startsWith('/')) return `${baseUrl}${url}`;
+    if (new URL(url).origin === baseUrl) return url;
+    return `${baseUrl}/login`;  // <-- fallback
+  },
   },
 };

@@ -94,7 +94,7 @@ function LoginFormInner() {
           </div>
 
           <div className="mb-6 rounded-2xl border border-[#10385c]/15 bg-[#10385c]/5 p-4 text-sm text-[#10385c] dark:border-[#10385c]/30 dark:bg-[#10385c]/10 dark:text-slate-200">
-            Введите рабочую почту. Если она есть в allowlist, вы попадёте в дашборд.
+            Введите рабочую почту.
           </div>
 
           {message ? (

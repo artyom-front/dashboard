@@ -85,7 +85,7 @@ export function UserMenu() {
         credentials: 'include',
       });
     } finally {
-      await signOut({ callbackUrl: '/login' });
+      await signOut({ callbackUrl: '/login', redirect: true });
     }
   };
 
